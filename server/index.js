@@ -2,7 +2,9 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const { execSync } = require('child_process');
 const connectDB = require('./config/db');
+const Lesson = require('./models/Lesson');
 
 // Route imports
 const authRoutes = require('./routes/auth');
@@ -51,6 +53,18 @@ const PORT = process.env.PORT || 5000;
 
 const start = async () => {
   await connectDB();
+  
+  try {
+    const lessonCount = await Lesson.countDocuments();
+    if (lessonCount === 0) {
+      console.log('🌱 Database is empty. Running automatic seed...');
+      execSync('npm run seed', { stdio: 'inherit' });
+      console.log('✅ Auto-seed complete!');
+    }
+  } catch (error) {
+    console.error('Failed to run auto-seed:', error);
+  }
+
   app.listen(PORT, () => {
     console.log(`🚀 Florence AI server running on port ${PORT}`);
   });
